@@ -12,12 +12,16 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.UUID;
+
 @Component
 public class SubscriptionClient {
 
+    String idempotencyKey = UUID.randomUUID().toString();
+
+
     @Autowired
     private RestClient subscriptionRestClient;
-
     public SubscriptionClient(
             RestClient.Builder builder,
             @Value("${subscription.api.base-url}") String baseUrl) {
@@ -38,6 +42,7 @@ public class SubscriptionClient {
     public OrderResponse createOrder(CreateOrderRequest request) {
         return subscriptionRestClient.post()
                 .uri("/api/orders")
+                .header("Idempotency-Key", idempotencyKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()

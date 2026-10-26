@@ -28,14 +28,13 @@ public class SubscriptionController {
     public OrderResponse createOrder(
             @RequestBody CreateOrderBody body) {
 
-
-        // Obtain the stable ID from your existing authenticated principal.
+       // Obtain the stable ID from your existing authenticated principal.
         return subscriptionService.createOrder(
-                body.planCode(), body.userId()
+                body.planCode(), body.externalUserId()
         );
     }
 
-    public record CreateOrderBody(String planCode,String userId) {}
+    public record CreateOrderBody(String planCode,String externalUserId) {}
 
     // ProductUserPrincipal is illustrative.
     // Replace it with your application's existing principal class.
