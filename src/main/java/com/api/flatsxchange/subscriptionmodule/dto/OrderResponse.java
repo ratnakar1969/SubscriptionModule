@@ -8,7 +8,8 @@ public record OrderResponse(
         String currency,
         Plan plan,
         String status,
-        String keyId
+        String keyId,
+        String razorPaySignature
 ) {
     public record Plan(
             String code,
