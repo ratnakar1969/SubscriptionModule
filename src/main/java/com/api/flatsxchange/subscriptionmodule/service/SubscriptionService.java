@@ -5,10 +5,7 @@ package com.api.flatsxchange.subscriptionmodule.service;
 
 
 import com.api.flatsxchange.subscriptionmodule.client.SubscriptionClient;
-import com.api.flatsxchange.subscriptionmodule.dto.CreateOrderRequest;
-import com.api.flatsxchange.subscriptionmodule.dto.OrderResponse;
-import com.api.flatsxchange.subscriptionmodule.dto.PlanResponse;
-import com.api.flatsxchange.subscriptionmodule.dto.VerifyPaymentRequest;
+import com.api.flatsxchange.subscriptionmodule.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +39,29 @@ public class SubscriptionService {
 
         return client.getSubscriptionStatus(externalUserId);
     }
+
+    public JsonNode consumeUsage(
+            String externalUserId,
+            String metricKey,
+            Integer quantity,
+            String idempotencyKey) {
+
+        return client.consumeUsage(
+                new ConsumeUsageRequest(externalUserId, metricKey, quantity),
+                idempotencyKey
+        );
+    }
+
+
+    public JsonNode checkEntitlements(
+            String externalUserId,
+            String featureCode) {
+
+        return client.checkEntitlements(
+                new CheckEntitlementRequest(externalUserId, featureCode)
+        );
+    }
+
 
 
 }

@@ -2,12 +2,11 @@
 package com.api.flatsxchange.subscriptionmodule.controller;
 
 
-import com.api.flatsxchange.subscriptionmodule.dto.OrderResponse;
-import com.api.flatsxchange.subscriptionmodule.dto.PlanResponse;
-import com.api.flatsxchange.subscriptionmodule.dto.VerifyPaymentRequest;
+import com.api.flatsxchange.subscriptionmodule.dto.*;
 import com.api.flatsxchange.subscriptionmodule.exception.ActiveSubscriptionException;
 import com.api.flatsxchange.subscriptionmodule.service.SubscriptionService;
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +16,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class SubscriptionController {
+
+    Logger subscriptionLog;
 
     private final SubscriptionService subscriptionService;
 
@@ -71,4 +72,30 @@ public class SubscriptionController {
 
         return subscriptionService.getSubscriptionStatus(externalUserId);
     }
+
+
+    @PostMapping("/usage/consume")
+    public JsonNode consumeUsage(
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestBody ConsumeUsageRequest body) {
+
+        return subscriptionService.consumeUsage(
+                body.userId(),
+                body.metricKey(),
+                body.quantity(),
+                idempotencyKey
+        );
+    }
+    @PostMapping("/entitlements/check")
+    public JsonNode checkEntitlements(
+            @RequestBody CheckEntitlementRequest body) {
+
+        return subscriptionService.checkEntitlements(
+                body.externalUserId(),
+                body.featureCode()
+        );
+    }
+
+
+
 }
