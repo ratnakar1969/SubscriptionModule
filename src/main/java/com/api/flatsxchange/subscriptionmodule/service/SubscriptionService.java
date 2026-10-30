@@ -18,11 +18,11 @@ public class SubscriptionService {
         this.client = client;
     }
 
-    public PlanResponse getPlans() {
+    public JsonNode getPlans() {
         return client.getPlans();
     }
 
-    public OrderResponse createOrder(
+    public JsonNode createOrder(
             String planCode,
             String authenticatedUserId) {
 
@@ -59,6 +59,20 @@ public class SubscriptionService {
 
         return client.checkEntitlements(
                 new CheckEntitlementRequest(externalUserId, featureCode)
+        );
+    }
+
+    public JsonNode recordFlatListed(
+            String externalUserId,
+            String propertyId,
+            String idempotencyKey) {
+
+        return client.recordFlatListed(
+                new RecordFlatListedRequest(
+                        externalUserId,
+                        propertyId
+                ),
+                idempotencyKey
         );
     }
 

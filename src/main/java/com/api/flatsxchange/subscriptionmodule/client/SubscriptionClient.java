@@ -40,14 +40,23 @@ public class SubscriptionClient {
     }
 
 
-    public PlanResponse getPlans() {
+    public JsonNode getPlans() {
+        log.info(
+                "Getting Plans"
+        );
         return subscriptionRestClient.get()
                 .uri("/api/plans")
                 .retrieve()
-                .body(PlanResponse.class);
+                .body(JsonNode.class);
     }
 
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public JsonNode createOrder(CreateOrderRequest request) {
+        log.info(
+                "Creating Order For : externalUserId={}, planCode={}",
+                request.externalUserId(),
+                request.planCode()
+        );
+
         try {
             return subscriptionRestClient.post()
                     .uri("/api/orders")
@@ -55,7 +64,7 @@ public class SubscriptionClient {
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(request)
                     .retrieve()
-                    .body(OrderResponse.class);
+                    .body(JsonNode.class);
         }
         catch (RestClientResponseException ex) {
 
@@ -161,6 +170,35 @@ public class SubscriptionClient {
         } catch (RestClientResponseException ex) {
             log.error(
                     "Entitlement check failed. HTTP status: {}, response: {}",
+                    ex.getStatusCode(),
+                    ex.getResponseBodyAsString()
+            );
+            throw ex;
+        }
+    }
+
+    public JsonNode recordFlatListed(
+            RecordFlatListedRequest request,
+            String idempotencyKey) {
+
+        log.info(
+                "Recording FlatsXchange listing: userId={}, propertyId={}",
+                request.userId(),
+                request.propertyId()
+        );
+
+        try {
+            return subscriptionRestClient.post()
+                    .uri("/api/usage/active-listings/publish")
+                    .header("Idempotency-Key", idempotencyKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(request)
+                    .retrieve()
+                    .body(JsonNode.class);
+
+        } catch (RestClientResponseException ex) {
+            log.error(
+                    "Recording flat listing failed. HTTP status: {}, response: {}",
                     ex.getStatusCode(),
                     ex.getResponseBodyAsString()
             );

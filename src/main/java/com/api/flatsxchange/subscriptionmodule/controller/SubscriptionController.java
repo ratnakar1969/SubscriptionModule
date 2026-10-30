@@ -6,6 +6,8 @@ import com.api.flatsxchange.subscriptionmodule.dto.*;
 import com.api.flatsxchange.subscriptionmodule.exception.ActiveSubscriptionException;
 import com.api.flatsxchange.subscriptionmodule.service.SubscriptionService;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,83 +19,106 @@ import java.util.Map;
 @RequestMapping("/api")
 public class SubscriptionController {
 
-    Logger subscriptionLog;
 
     private final SubscriptionService subscriptionService;
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
 
     public SubscriptionController(SubscriptionService subscriptionService) {
         this.subscriptionService = subscriptionService;
     }
 
     @GetMapping("/plans")
-    public PlanResponse getPlans() {
-        return subscriptionService.getPlans();
+    public ResponseEntity<JsonNode> getPlans() {
+
+       JsonNode planResponse= subscriptionService.getPlans();
+
+        return ResponseEntity.ok(planResponse);
+
     }
 
     @PostMapping("/orders")
-    @ResponseStatus(HttpStatus.CREATED)
-    public  ResponseEntity<?> createOrder(
-            @RequestBody CreateOrderBody body) {
+    public  ResponseEntity<JsonNode> createOrder(
+            @RequestBody CreateOrderRequest body) {
 
        // Obtain the stable ID from your existing authenticated principal.
         try {
-            OrderResponse response = subscriptionService.createOrder(
+            JsonNode orderResponse = subscriptionService.createOrder(
                     body.planCode(), body.externalUserId());
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(orderResponse);
 
 
         }
         catch (ActiveSubscriptionException ex) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of(
-                            "error", "ACTIVE_SUBSCRIPTION_EXISTS",
-                            "message",
-                            "You already have an active subscription. Please check your current plan."
-                    ));
+            ObjectNode errorResponse = objectMapper.createObjectNode()
+                    .put("error", "ACTIVE_SUBSCRIPTION_EXISTS")
+                    .put("message",
+                            "You already have an active subscription. Please check your current plan.");
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(errorResponse);
+
+
         }
 
     }
 
-    public record CreateOrderBody(String planCode,String externalUserId) {}
 
     // ProductUserPrincipal is illustrative.
     // Replace it with your application's existing principal class.
 
     @PostMapping("/payments/verify")
-    public JsonNode verifyPayment(
+    public ResponseEntity<JsonNode> verifyPayment(
             @RequestBody VerifyPaymentRequest request) {
 
-        return subscriptionService.verifyPayment(request);
-    }
+      JsonNode paymentVerifyResponse=subscriptionService.verifyPayment(request);
+        return ResponseEntity.ok(paymentVerifyResponse);
 
-    @GetMapping("/status")
-    public JsonNode getSubscriptionStatus(
-            @RequestParam String externalUserId) {
 
-        return subscriptionService.getSubscriptionStatus(externalUserId);
     }
 
 
     @PostMapping("/usage/consume")
-    public JsonNode consumeUsage(
+    public ResponseEntity<JsonNode> consumeUsage(
             @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestBody ConsumeUsageRequest body) {
 
-        return subscriptionService.consumeUsage(
+       JsonNode consumeUsageResponse=subscriptionService.consumeUsage(
                 body.userId(),
                 body.metricKey(),
                 body.quantity(),
                 idempotencyKey
         );
+        return ResponseEntity.ok(consumeUsageResponse);
+
     }
+
     @PostMapping("/entitlements/check")
-    public JsonNode checkEntitlements(
+    public  ResponseEntity<JsonNode> checkEntitlements(
             @RequestBody CheckEntitlementRequest body) {
 
-        return subscriptionService.checkEntitlements(
+        JsonNode chkEntitlementResponse= subscriptionService.checkEntitlements(
                 body.externalUserId(),
                 body.featureCode()
         );
+        return ResponseEntity.ok(chkEntitlementResponse);
+
+    }
+
+    @PostMapping("/usage/record-flats-listed")
+    public ResponseEntity<JsonNode> recordFlatListed(
+            @RequestBody RecordFlatListedRequest request,
+            @RequestHeader("Idempotency-Key") String idempotencyKey) {
+
+        JsonNode response = subscriptionService.recordFlatListed(
+                request.userId(),
+                request.propertyId(),
+                idempotencyKey
+        );
+
+        return ResponseEntity.ok(response);
     }
 
 
